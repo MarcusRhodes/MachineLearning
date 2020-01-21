@@ -31,10 +31,10 @@ targets_predicted = classifier.predict(iris_test)
 
 class HardCodedClassifier:
     
-    def fit(error, iris_train, target_train):
+    def fit(self, iris_train, target_train):
         return True
     
-    def predict(error, data_test):
+    def predict(self, data_test):
         # print(error)
         list = []
         for data in data_test:
