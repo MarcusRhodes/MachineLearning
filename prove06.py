@@ -13,7 +13,7 @@ from keras.models import Sequential
 from keras.layers import Dense
 import keras as ks
 import mnist
-"""
+
 #ramen_names = ["Review_#", "Brand", "Variety", "Style", "Country", "Stars", "Top_Ten"]
 # Load the ramen data
 ramen_data = pd.read_csv("data/ramen-ratings.csv", sep = ',', header=0, skipinitialspace=True, na_values=["?"])
@@ -71,22 +71,58 @@ model.compile(
   loss='categorical_crossentropy',
   metrics=['accuracy'],
 )
-
+"""
 model.fit(
   x_train.values, # training data
   ks.utils.to_categorical(y_train.values), # training targets
   epochs=7,#do it 7 times
   batch_size=32,#32 roes at a time
 )
+"""
+history = model.fit(
+  x_train.values, # training data
+  ks.utils.to_categorical(y_train.values), # training targets
+  epochs=15,#do it X times
+  batch_size=32,#32 roes at a time
+  validation_split = 0.2
+)
+
+import keras
+from matplotlib import pyplot as plt
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+plt.title('model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'val'], loc='upper left')
+plt.show()
 
 model.evaluate(
   x_test,
   ks.utils.to_categorical(y_test)
 )
+
+from keras.wrappers.scikit_learn import KerasRegressor
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import KFold
+# define base model
+def baseline_model():
+	# create model
+	model = Sequential()
+	model.add(Dense(5, input_dim=5, kernel_initializer='normal', activation='relu'))
+	model.add(Dense(1, kernel_initializer='normal'))
+	# Compile model
+	model.compile(loss='mean_squared_error', optimizer='adam')
+	return model
+# evaluate model
+estimator = KerasRegressor(build_fn=history, epochs=10, batch_size=5, verbose=0)
+kfold = KFold(n_splits=10)
+results = cross_val_score(estimator, x_train, y_train, cv=kfold)
+print("Baseline: %.2f (%.2f) MSE" % (results.mean(), results.std()))
+
+
+
 """
-
-
-
 toy_data = pd.read_csv("data/toy_dataset.csv", sep = ',', header=0, skipinitialspace=True, na_values=["?"])
 toy_data.head()
 
@@ -127,37 +163,59 @@ x_train, x_test, y_train, y_test = train_test_split(toy_data, toy_data.illness_c
 
 #build Nural Network model
 model = Sequential([
-  #Dense(64, activation='relu'),
-  #Dense(64, activation='relu'),
-  #Dense(2, activation='softmax'),
+  Dense(64, activation='relu'),
+  Dense(45, activation='relu'),
   Dense(32, activation='relu'),
   Dense(12, activation='relu'),
-  Dense(2, activation='softmax'),
+  #Dense(1, activation='sigmoid'),
+  Dense(2, activation='softmax')
 ])
 
-model.compile(
-  optimizer='adam',
-  loss='categorical_crossentropy',
-  metrics=['accuracy'],
-)
+#model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+from keras import optimizers
+model.compile(optimizer=optimizers.RMSprop(lr=0.1), loss='mean_squared_error', metrics=['mae'])
 
 history = model.fit(
   x_train.values, # training data
   ks.utils.to_categorical(y_train.values), # training targets
-  epochs=3,#do it X times
+  epochs=15,#do it X times
   batch_size=32,#32 roes at a time
   validation_split = 0.2
 )
 
 import keras
 from matplotlib import pyplot as plt
-plt.plot(history.history['accuracy'])
-plt.plot(history.history['val_accuracy'])
+#plt.plot(history.history['accuracy'])
+plt.plot(history.history['mae'])
+#plt.plot(history.history['val_accuracy'])
+plt.plot(history.history['val_mae'])
 plt.title('model accuracy')
 plt.ylabel('accuracy')
 plt.xlabel('epoch')
 plt.legend(['train', 'val'], loc='upper left')
 plt.show()
+
+
+
+from keras.wrappers.scikit_learn import KerasRegressor
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import KFold
+# define base model
+def baseline_model():
+	# create model
+	model = Sequential()
+	model.add(Dense(5, input_dim=5, kernel_initializer='normal', activation='relu'))
+	model.add(Dense(1, kernel_initializer='normal'))
+	# Compile model
+	model.compile(loss='mean_squared_error', optimizer='adam')
+	return model
+# evaluate model
+estimator = KerasRegressor(build_fn=baseline_model, epochs=10, batch_size=5, verbose=0)
+kfold = KFold(n_splits=10)
+results = cross_val_score(estimator, x_train, y_train, cv=kfold)
+print("Baseline: %.2f (%.2f) MSE" % (results.mean(), results.std()))
+
 
 
 #model.evaluate(
